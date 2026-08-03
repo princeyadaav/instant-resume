@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Build your Resume in seconds</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Alpine.js for reactive state management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- html2pdf.js for direct A4 PDF exporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Google Fonts for crisp typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-gray-800" x-data="resumeApp()">
+
+    <!-- Top Action Navbar -->
+    <header class="no-print bg-slate-900 text-white px-6 py-3 flex items-center justify-between shadow-md z-10 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <i class="fa-solid fa-file-invoice text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-none">Resume Builder</h1>
+                <p class="text-xs text-slate-400 mt-1">Based on exact standard layout format</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <button @click="loadSampleData()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded font-medium transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> Load Sample Data
+            </button>
+            <button @click="clearForm()" class="text-xs bg-red-900/40 hover:bg-red-800/60 text-red-200 px-3 py-2 rounded font-medium transition flex items-center gap-1.5">
+                <i class="fa-solid fa-trash-can"></i> Clear All
+            </button>
+            <button @click="printPDF()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded font-medium transition flex items-center gap-1.5" title="Print via Browser dialog">
+                <i class="fa-solid fa-print"></i> Print
+            </button>
+            <button @click="downloadPDF()" :disabled="isGenerating" class="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white px-4 py-2 rounded-md font-semibold text-xs shadow transition flex items-center gap-2">
+                <i class="fa-solid" :class="isGenerating ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i>
+                <span x-text="isGenerating ? 'Generating PDF...' : 'Download A4 PDF'"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Editor & Preview Grid -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- LEFT PANEL: Dynamic Form Editor -->
+        <aside class="no-print w-full md:w-1/2 lg:w-[45%] bg-white border-r border-slate-200 overflow-y-auto p-6 space-y-6">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-blue-600"></i> Fill Resume Details
+                </h2>
+                <span class="text-xs text-slate-500">Auto-updates preview live</span>
+            </div>
+
+            <!-- SECTION 1: Personal Info -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user text-blue-500"></i> Personal Information
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2">
+                        <label class="text-xs font-medium text-slate-600">Full Name</label>
+                        <input type="text" x-model="resume.personal.fullName" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. PRINCE YADAV">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs font-medium text-slate-600">Location (City, State, Zip)</label>
+                        <input type="text" x-model="resume.personal.location" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. LUCKNOW, UTTAR PRADESH, 226028">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Phone Number</label>
+                        <input type="text" x-model="resume.personal.phone" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="+91926490XXXX">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Email Address</label>
+                        <input type="email" x-model="resume.personal.email" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="email@gmail.com">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">LinkedIn Profile URL</label>
+                        <input type="text" x-model="resume.personal.linkedin" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="linkedin.com/in/username">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">GitHub Profile URL</label>
+                        <input type="text" x-model="resume.personal.github" class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="github.com/username">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Education -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-blue-500"></i> Education
+                    </h3>
+                    <button @click="addEducation()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <template x-for="(edu, index) in resume.education" :key="index">
+                    <div class="p-3 bg-white rounded border border-slate-200 space-y-2 relative group">
+                        <button @click="removeEducation(index)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Institution Name</label>
+                                <input type="text" x-model="edu.institution" class="w-full text-xs p-1.5 border border-slate-300 rounded">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Degree & Major / GPA</label>
+                                <input type="text" x-model="edu.degree" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="Bachelor of Technology; GPA: 8.5">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Institution Location</label>
+                                <input type="text" x-model="edu.location" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="Rohtak, India">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Dates (Start - End)</label>
+                                <input type="text" x-model="edu.dates" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="July 2024 - June 2028">
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- SECTION 3: Skills Summary -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-screwdriver-wrench text-blue-500"></i> Skills Summary
+                </h3>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Languages</label>
+                        <input type="text" x-model="resume.skills.languages" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Python, SQL, JAVA, C, C++">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Frameworks</label>
+                        <input type="text" x-model="resume.skills.frameworks" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Pandas, Numpy, Scikit-Learn, Matplotlib">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Tools</label>
+                        <input type="text" x-model="resume.skills.tools" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Power BI, Excel, PowerPoint, Tableau, MySQL, SQLite">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Platforms</label>
+                        <input type="text" x-model="resume.skills.platforms" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="PyCharm, Jupyter Notebook, Visual Studio Code, IntelliJ IDEA">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600">Soft Skills</label>
+                        <input type="text" x-model="resume.skills.softSkills" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Rapport Building, Strong Stakeholder management, People Management">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Work Experience -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-briefcase text-blue-500"></i> Work Experience
+                    </h3>
+                    <button @click="addWork()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Job
+                    </button>
+                </div>
+
+                <template x-for="(work, index) in resume.workExperience" :key="index">
+                    <div class="p-3 bg-white rounded border border-slate-200 space-y-2 relative">
+                        <button @click="removeWork(index)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Role / Position</label>
+                                <input type="text" x-model="work.role" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="BUSINESS ANALYST INTERN">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Company / Organization</label>
+                                <input type="text" x-model="work.company" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="WS">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Link Text / URL (Optional)</label>
+                                <input type="text" x-model="work.link" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="LINK">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Dates</label>
+                                <input type="text" x-model="work.dates" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="January 24- March 24">
+                            </div>
+                        </div>
+                        
+                        <!-- Bullet Points -->
+                        <div class="pt-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Achievement Bullets</label>
+                                <button @click="addWorkBullet(index)" class="text-[10px] text-blue-600 hover:underline">+ Bullet</button>
+                            </div>
+                            <template x-for="(bullet, bIdx) in work.bullets" :key="bIdx">
+                                <div class="flex gap-1 mb-1 items-center">
+                                    <input type="text" x-model="work.bullets[bIdx]" class="w-full text-xs p-1 border border-slate-200 rounded">
+                                    <button @click="removeWorkBullet(index, bIdx)" class="text-slate-400 hover:text-red-500 text-xs px-1">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- SECTION 5: Projects -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-blue-500"></i> Projects
+                    </h3>
+                    <button @click="addProject()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Project
+                    </button>
+                </div>
+
+                <template x-for="(proj, index) in resume.projects" :key="index">
+                    <div class="p-3 bg-white rounded border border-slate-200 space-y-2 relative">
+                        <button @click="removeProject(index)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Project Name</label>
+                                <input type="text" x-model="proj.title" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="Student Performance Prediction">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Link Title/Tag</label>
+                                <input type="text" x-model="proj.linkText" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="LINK">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Dates</label>
+                                <input type="text" x-model="proj.dates" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="December 23- February 2024">
+                            </div>
+                        </div>
+
+                        <!-- Bullet Points -->
+                        <div class="pt-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Project Highlights</label>
+                                <button @click="addProjectBullet(index)" class="text-[10px] text-blue-600 hover:underline">+ Bullet</button>
+                            </div>
+                            <template x-for="(bullet, bIdx) in proj.bullets" :key="bIdx">
+                                <div class="flex gap-1 mb-1 items-center">
+                                    <input type="text" x-model="proj.bullets[bIdx]" class="w-full text-xs p-1 border border-slate-200 rounded">
+                                    <button @click="removeProjectBullet(index, bIdx)" class="text-slate-400 hover:text-red-500 text-xs px-1">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- SECTION 6: Certificates -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-award text-blue-500"></i> Certificates
+                    </h3>
+                    <button @click="addCertificate()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Certificate
+                    </button>
+                </div>
+
+                <template x-for="(cert, index) in resume.certificates" :key="index">
+                    <div class="p-3 bg-white rounded border border-slate-200 space-y-2 relative">
+                        <button @click="removeCertificate(index)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="col-span-2">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Certificate Title & Issuer</label>
+                                <input type="text" x-model="cert.title" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="Programming in Python (Meta)">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Badge / Tag Text</label>
+                                <input type="text" x-model="cert.tag" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="CERTIFICATE">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Date</label>
+                                <input type="text" x-model="cert.date" class="w-full text-xs p-1.5 border border-slate-300 rounded" placeholder="March 2023">
+                            </div>
+                        </div>
+
+                        <!-- Bullet Points -->
+                        <div class="pt-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] font-medium text-slate-500 uppercase">Learnings & Details</label>
+                                <button @click="addCertBullet(index)" class="text-[10px] text-blue-600 hover:underline">+ Bullet</button>
+                            </div>
+                            <template x-for="(bullet, bIdx) in cert.bullets" :key="bIdx">
+                                <div class="flex gap-1 mb-1 items-center">
+                                    <input type="text" x-model="cert.bullets[bIdx]" class="w-full text-xs p-1 border border-slate-200 rounded">
+                                    <button @click="removeCertBullet(index, bIdx)" class="text-slate-400 hover:text-red-500 text-xs px-1">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: Live Resume A4 Preview -->
+        <main class="w-full md:w-1/2 lg:w-[55%] bg-slate-200/80 overflow-y-auto p-4 md:p-8 flex justify-center items-start">
+            
+            <div id="resume-preview" class="print-area a4-page resume-font p-8 text-gray-900 bg-white shadow-xl rounded-sm text-xs leading-normal">
+                
+                <!-- HEADER SECTION -->
+                <div class="text-center space-y-1 mb-2">
+                    <h1 class="text-2xl font-bold tracking-wider font-serif-title text-black uppercase" x-text="resume.personal.fullName || 'YOUR NAME'"></h1>
+                    <p class="text-[11px] text-gray-800" x-text="resume.personal.location || 'City, State, Zip'"></p>
+                    
+                    <!-- Contact icons line -->
+                    <div class="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-[10px] pt-0.5 text-gray-900 font-medium">
+                        <template x-if="resume.personal.phone">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-solid fa-phone text-[9px]"></i>
+                                <span x-text="resume.personal.phone"></span>
+                            </span>
+                        </template>
+
+                        <template x-if="resume.personal.email">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-solid fa-envelope text-[9px]"></i>
+                                <a :href="'mailto:' + resume.personal.email" class="text-blue-700 hover:underline" x-text="resume.personal.email"></a>
+                            </span>
+                        </template>
+
+                        <template x-if="resume.personal.linkedin">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-brands fa-linkedin text-[9px]"></i>
+                                <a :href="resume.personal.linkedin.startsWith('http') ? resume.personal.linkedin : 'https://' + resume.personal.linkedin" target="_blank" class="text-blue-700 hover:underline" x-text="resume.personal.linkedin"></a>
+                            </span>
+                        </template>
+
+                        <template x-if="resume.personal.github">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-brands fa-github text-[9px]"></i>
+                                <a :href="resume.personal.github.startsWith('http') ? resume.personal.github : 'https://' + resume.personal.github" target="_blank" class="text-blue-700 hover:underline" x-text="resume.personal.github"></a>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- EDUCATION SECTION -->
+                <template x-if="resume.education && resume.education.length > 0">
+                    <section class="mb-3">
+                        <div class="text-center my-1.5 py-[1px] border-y border-gray-400">
+                            <h2 class="font-bold text-[11px] tracking-widest text-gray-800 uppercase">EDUCATION</h2>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <template x-for="(edu, idx) in resume.education" :key="idx">
+                                <div>
+                                    <div class="flex justify-between items-baseline font-bold text-[11px]">
+                                        <span x-text="edu.institution"></span>
+                                        <span x-text="edu.location"></span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline italic text-[10.5px] text-gray-700">
+                                        <span x-text="edu.degree"></span>
+                                        <span x-text="edu.dates"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+                <!-- SKILLS SUMMARY SECTION -->
+                <section class="mb-3">
+                    <div class="text-center my-1.5 py-[1px] border-y border-gray-400">
+                        <h2 class="font-bold text-[11px] tracking-widest text-gray-800 uppercase">SKILLS SUMMARY</h2>
+                    </div>
+
+                    <ul class="space-y-0.5 text-[10.5px] list-disc pl-4 text-gray-800">
+                        <template x-if="resume.skills.languages">
+                            <li><strong class="font-bold">Languages:</strong> <span x-text="resume.skills.languages"></span></li>
+                        </template>
+                        <template x-if="resume.skills.frameworks">
+                            <li><strong class="font-bold">Frameworks:</strong> <span x-text="resume.skills.frameworks"></span></li>
+                        </template>
+                        <template x-if="resume.skills.tools">
+                            <li><strong class="font-bold">Tools:</strong> <span x-text="resume.skills.tools"></span></li>
+                        </template>
+                        <template x-if="resume.skills.platforms">
+                            <li><strong class="font-bold">Platforms:</strong> <span x-text="resume.skills.platforms"></span></li>
+                        </template>
+                        <template x-if="resume.skills.softSkills">
+                            <li><strong class="font-bold">Soft Skills:</strong> <span x-text="resume.skills.softSkills"></span></li>
+                        </template>
+                    </ul>
+                </section>
+
+                <!-- WORK EXPERIENCE SECTION -->
+                <template x-if="resume.workExperience && resume.workExperience.length > 0">
+                    <section class="mb-3">
+                        <div class="text-center my-1.5 py-[1px] border-y border-gray-400">
+                            <h2 class="font-bold text-[11px] tracking-widest text-gray-800 uppercase">WORK EXPERIENCE</h2>
+                        </div>
+
+                        <div class="space-y-2">
+                            <template x-for="(work, wIdx) in resume.workExperience" :key="wIdx">
+                                <div>
+                                    <div class="flex justify-between items-baseline font-bold text-[11px]">
+                                        <div>
+                                            <span class="uppercase" x-text="work.role"></span>
+                                            <template x-if="work.company">
+                                                <span> | <span x-text="work.company"></span></span>
+                                            </template>
+                                            <template x-if="work.link">
+                                                <span> |
+                                                    <a :href="getLinkHref(work.link)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <span class="font-semibold text-[10.5px] text-gray-800" x-text="work.dates"></span>
+                                    </div>
+
+                                    <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[10.5px] text-gray-800">
+                                        <template x-for="(bullet, bIdx) in work.bullets" :key="bIdx">
+                                            <template x-if="bullet && bullet.trim().length > 0">
+                                                <li x-text="bullet"></li>
+                                            </template>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+                <!-- PROJECTS SECTION -->
+                <template x-if="resume.projects && resume.projects.length > 0">
+                    <section class="mb-3">
+                        <div class="text-center my-1.5 py-[1px] border-y border-gray-400">
+                            <h2 class="font-bold text-[11px] tracking-widest text-gray-800 uppercase">PROJECTS</h2>
+                        </div>
+
+                        <div class="space-y-2">
+                            <template x-for="(proj, pIdx) in resume.projects" :key="pIdx">
+                                <div>
+                                    <div class="flex justify-between items-baseline font-bold text-[11px]">
+                                        <div>
+                                            <span x-text="proj.title"></span>
+                                            <template x-if="proj.linkText">
+                                                <span> |
+                                                    <a :href="getLinkHref(proj.linkText)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <span class="font-semibold text-[10.5px] text-gray-800" x-text="proj.dates"></span>
+                                    </div>
+
+                                    <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[10.5px] text-gray-800">
+                                        <template x-for="(bullet, bIdx) in proj.bullets" :key="bIdx">
+                                            <template x-if="bullet && bullet.trim().length > 0">
+                                                <li x-text="bullet"></li>
+                                            </template>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+                <!-- CERTIFICATES SECTION -->
+                <template x-if="resume.certificates && resume.certificates.length > 0">
+                    <section class="mb-3">
+                        <div class="text-center my-1.5 py-[1px] border-y border-gray-400">
+                            <h2 class="font-bold text-[11px] tracking-widest text-gray-800 uppercase">CERTIFICATES</h2>
+                        </div>
+
+                        <div class="space-y-2">
+                            <template x-for="(cert, cIdx) in resume.certificates" :key="cIdx">
+                                <div>
+                                    <div class="flex justify-between items-baseline font-bold text-[11px]">
+                                        <div>
+                                            <span x-text="cert.title"></span>
+                                            <template x-if="cert.tag">
+                                                <span> |
+                                                    <a :href="getLinkHref(cert.tag)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <span class="font-semibold text-[10.5px] text-gray-800" x-text="cert.date"></span>
+                                    </div>
+
+                                    <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[10.5px] text-gray-800">
+                                        <template x-for="(bullet, bIdx) in cert.bullets" :key="bIdx">
+                                            <template x-if="bullet && bullet.trim().length > 0">
+                                                <li x-text="bullet"></li>
+                                            </template>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+            </div>
+        </main>
+
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/form.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/app.js"></script>
+</html>
