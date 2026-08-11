@@ -18,10 +18,16 @@ window.resumePdfMethods = {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
+<<<<<<< HEAD
         // Be robust when checking for the html2pdf library (some bundles expose it differently).
         if (!window.html2pdf) {
             console.error('html2pdf is not available. Falling back to browser print.');
             try { this.isGenerating = false; } catch (e) { /* noop */ }
+=======
+        if (typeof window.html2pdf !== 'function') {
+            console.error('html2pdf is not available. Falling back to browser print.');
+            this.isGenerating = false;
+>>>>>>> 66623d262ff9cde6e1860d96a1bb3fbfc01545cc
             window.print();
             return;
         }

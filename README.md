@@ -33,6 +33,15 @@ Then visit:
 http://localhost:8000
 ```
 
+<<<<<<< HEAD
+=======
+## Deployment
+This is a static website and can be deployed on:
+- GitHub Pages
+- Netlify
+- Vercel
+- Firebase Hosting
+>>>>>>> 66623d262ff9cde6e1860d96a1bb3fbfc01545cc
 
 ## Notes
 The app uses CDN-based libraries such as Tailwind CSS, Alpine.js, FontAwesome, and html2pdf, so internet access is required for those assets.
