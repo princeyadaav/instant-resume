@@ -15,71 +15,7 @@
     <!-- Google Fonts for crisp typography -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
     
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-
-        .font-serif-title {
-            font-family: 'Cinzel', 'Merriweather', Georgia, serif;
-        }
-
-        .resume-font {
-            font-family: 'Calibri', 'Arial', 'Helvetica', sans-serif;
-        }
-
-        /* Standard A4 dimensions preview */
-        .a4-page {
-            width: 210mm;
-            height: 297mm;
-            min-height: 297mm;
-            background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* CSS for printing directly to PDF */
-        @media print {
-            html, body {
-                height: 100%;
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-area {
-                width: 210mm !important;
-                height: 297mm !important;
-                min-height: 297mm !important;
-                box-shadow: none !important;
-                margin: 0 auto !important;
-                padding: 8mm !important;
-                overflow: hidden !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 0;
-            }
-        }
-
-        /* Custom scrollbar for form editor */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-gray-800" x-data="resumeApp()">
 
@@ -487,7 +423,12 @@
                                                 <span> | <span x-text="work.company"></span></span>
                                             </template>
                                             <template x-if="work.link">
-                                                <span> | <a href="#" class="text-blue-700 hover:underline uppercase" x-text="work.link"></a></span>
+                                                <span> |
+                                                    <a :href="getLinkHref(work.link)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
                                             </template>
                                         </div>
                                         <span class="font-semibold text-[10.5px] text-gray-800" x-text="work.dates"></span>
@@ -520,7 +461,12 @@
                                         <div>
                                             <span x-text="proj.title"></span>
                                             <template x-if="proj.linkText">
-                                                <span> | <a href="#" class="text-blue-700 hover:underline" x-text="proj.linkText"></a></span>
+                                                <span> |
+                                                    <a :href="getLinkHref(proj.linkText)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
                                             </template>
                                         </div>
                                         <span class="font-semibold text-[10.5px] text-gray-800" x-text="proj.dates"></span>
@@ -553,7 +499,12 @@
                                         <div>
                                             <span x-text="cert.title"></span>
                                             <template x-if="cert.tag">
-                                                <span> | <a href="#" class="text-blue-700 hover:underline" x-text="cert.tag"></a></span>
+                                                <span> |
+                                                    <a :href="getLinkHref(cert.tag)" target="_blank" rel="noopener noreferrer"
+                                                       class="ml-1 inline-flex items-center rounded bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase text-white no-underline hover:bg-blue-700">
+                                                        <span x-text="getLinkLabel()"></span>
+                                                    </a>
+                                                </span>
                                             </template>
                                         </div>
                                         <span class="font-semibold text-[10.5px] text-gray-800" x-text="cert.date"></span>
@@ -577,197 +528,9 @@
 
     </div>
 
-    <script>
-        function resumeApp() {
-            const createEmptyResume = () => ({
-                personal: {
-                    fullName: '',
-                    location: '',
-                    phone: '',
-                    email: '',
-                    linkedin: '',
-                    github: ''
-                },
-                education: [],
-                skills: {
-                    languages: '',
-                    frameworks: '',
-                    tools: '',
-                    platforms: '',
-                    softSkills: ''
-                },
-                workExperience: [],
-                projects: [],
-                certificates: []
-            });
-
-            return {
-                resume: createEmptyResume(),
-                isGenerating: false,
-
-                init() {
-                    this.loadSampleData();
-                },
-
-                loadSampleData() {
-                    this.resume = {
-                        personal: {
-                            fullName: 'DEVKANT BHAGAT',
-                            location: 'Bangalore, Karnataka, 560068',
-                            phone: '+91725496XXXX',
-                            email: 'devkantkumarXXXX@gmail.com',
-                            linkedin: 'linkedin.com/in/devkantbhagat',
-                            github: 'github.com/devkantbhagat'
-                        },
-                        education: [
-                            {
-                                institution: 'Maharishi Dayanand University',
-                                location: 'Rohtak, India',
-                                degree: 'Bachelor of Technology in Computer Science; GPA: 8.5',
-                                dates: 'June 2020 - August 2024'
-                            }
-                        ],
-                        skills: {
-                            languages: 'Python, SQL, JAVA, C, C++',
-                            frameworks: 'Pandas, Numpy, Scikit-Learn, Matplotlib',
-                            tools: 'Power BI, Excel, PowerPoint, Tableau, MySQL, SQLite',
-                            platforms: 'PyCharm, Jupyter Notebook, Visual Studio Code, IntelliJ IDEA',
-                            softSkills: 'Rapport Building, Strong Stakeholder management, People Management, Excellent communication'
-                        },
-                        workExperience: [
-                            {
-                                role: 'BUSINESS ANALYST INTERN',
-                                company: 'WS',
-                                link: 'LINK',
-                                dates: 'January 24 - March 24',
-                                bullets: [
-                                    'Streamlined data collection and reporting procedures, reducing processing time by 20% enhancing efficiency.',
-                                    'Implemented process improvements and automation solutions, resulting in 15% increase in productivity.',
-                                    'Collaborated with 3+ cross-functional teams to gather requirements, define project scopes, and ensure alignment with business objectives.',
-                                    'Produced 15+ comprehensive reports and presentations summarizing findings and recommendations.',
-                                    'Conducted in-depth market research and analysis, resulting in the identification of 10+ key trends.'
-                                ]
-                            }
-                        ],
-                        projects: [
-                            {
-                                title: 'Student Performance Prediction',
-                                linkText: 'LINK',
-                                dates: 'December 23- February 2024',
-                                bullets: [
-                                    'Achieved a 96% accuracy rate in forecasting student academic performance by developing and deploying a machine learning model.',
-                                    'Managed data integrity by handling missing values and encoding categorical variables, enhancing quality by 33%.',
-                                    'Conducted experiments with both classification algorithms to identify the most suitable approach.'
-                                ]
-                            }
-                        ],
-                        certificates: [
-                            {
-                                title: 'Programming in Python (Meta)',
-                                tag: 'CERTIFICATE',
-                                date: 'March 2023',
-                                bullets: [
-                                    'Mastered fundamental Python syntax, efficiently utilizing control flow, loops, functions, and data structures.'
-                                ]
-                            }
-                        ]
-                    };
-                },
-
-                clearForm() {
-                    this.resume = createEmptyResume();
-                },
-
-                addEducation() {
-                    this.resume.education.push({ institution: '', location: '', degree: '', dates: '' });
-                },
-
-                removeEducation(index) {
-                    this.resume.education.splice(index, 1);
-                },
-
-                addWork() {
-                    this.resume.workExperience.push({ role: '', company: '', link: '', dates: '', bullets: [''] });
-                },
-
-                removeWork(index) {
-                    this.resume.workExperience.splice(index, 1);
-                },
-
-                addWorkBullet(index) {
-                    this.resume.workExperience[index].bullets.push('');
-                },
-
-                removeWorkBullet(workIndex, bulletIndex) {
-                    this.resume.workExperience[workIndex].bullets.splice(bulletIndex, 1);
-                },
-
-                addProject() {
-                    this.resume.projects.push({ title: '', linkText: '', dates: '', bullets: [''] });
-                },
-
-                removeProject(index) {
-                    this.resume.projects.splice(index, 1);
-                },
-
-                addProjectBullet(index) {
-                    this.resume.projects[index].bullets.push('');
-                },
-
-                removeProjectBullet(projectIndex, bulletIndex) {
-                    this.resume.projects[projectIndex].bullets.splice(bulletIndex, 1);
-                },
-
-                addCertificate() {
-                    this.resume.certificates.push({ title: '', tag: '', date: '', bullets: [''] });
-                },
-
-                removeCertificate(index) {
-                    this.resume.certificates.splice(index, 1);
-                },
-
-                addCertBullet(index) {
-                    this.resume.certificates[index].bullets.push('');
-                },
-
-                removeCertBullet(certIndex, bulletIndex) {
-                    this.resume.certificates[certIndex].bullets.splice(bulletIndex, 1);
-                },
-
-                downloadPDF() {
-                    const element = document.getElementById('resume-preview');
-                    if (!element) return;
-                    
-                    this.isGenerating = true;
-                    
-                    const fileName = (this.resume.personal.fullName || 'Resume')
-                        .trim()
-                        .toUpperCase()
-                        .replace(/\s+/g, '_') + '_Resume.pdf';
-
-                    const opt = {
-                        margin: 0,
-                        filename: fileName,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-
-                    // Use html2pdf for direct file download
-                    html2pdf().set(opt).from(element).save().then(() => {
-                        this.isGenerating = false;
-                    }).catch(err => {
-                        console.error('PDF export failed, falling back to window print', err);
-                        this.isGenerating = false;
-                        window.print();
-                    });
-                },
-
-                printPDF() {
-                    window.print();
-                }
-            };
-        }
-    </script>
-</body>
+    <script src="js/data.js"></script>
+    <script src="js/form.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/app.js"></script>
 </html>
